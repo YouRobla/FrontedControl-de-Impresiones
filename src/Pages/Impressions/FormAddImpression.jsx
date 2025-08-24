@@ -21,7 +21,7 @@ const PRICES = {
   color: 0.2,
 };
 
-export const FormAddImpression = ({ open, handleClose }) => {
+export const FormAddImpression = ({ open, handleClose, initialData, mode = "add" }) => {
   const [formData, setFormData] = useState({
     userType: "",
     pages: 1,
@@ -31,6 +31,21 @@ export const FormAddImpression = ({ open, handleClose }) => {
 
   const [errors, setErrors] = useState({});
 
+ 
+    // Si pasas datos iniciales (cuando editas), se cargan al abrir el modal
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        userType: initialData.userType || "",
+        pages: initialData.pages || 1,
+        printType: initialData.printType || "blanco_negro",
+        finalPrice: parseFloat(initialData.finalPrice || (1 * PRICES["blanco_negro"])).toFixed(2),
+      });
+    }
+  }, [initialData, open]);
+
+
+  // Calcula automáticamente el precio cuando cambian páginas o tipo
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -38,39 +53,38 @@ export const FormAddImpression = ({ open, handleClose }) => {
     }));
   }, [formData.pages, formData.printType]);
 
-  const validateForm = () => {
+   const validateForm = () => {
     let newErrors = {};
-    if (!formData.userType) 
-      newErrors.userType = "Selecciona un tipo de usuario";
-    if (!formData.pages || formData.pages < 1)
-      newErrors.pages = "Debe ser al menos 1 página";
-    if (!formData.finalPrice || isNaN(formData.finalPrice))
+    if (!formData.userType) newErrors.userType = "Selecciona un tipo de usuario";
+    if (!formData.pages || formData.pages < 1) newErrors.pages = "Debe ser al menos 1 página";
+    if (!formData.finalPrice || isNaN(Number(formData.finalPrice)))
       newErrors.finalPrice = "Ingresa un precio válido";
-
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // true si no hay errores
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+ const handleSave = () => {
     if (validateForm()) {
-      console.log("Datos del formulario:", formData);
+      if (mode === "add") {
+        console.log("📄 Nueva impresión:", formData);
+      } else {
+        console.log("✏️ Edición de impresión:", formData);
+      }
       handleClose();
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      keepMounted
-      onClose={handleClose}
-      fullWidth
-      maxWidth="sm"
-    >
-      <DialogTitle fontWeight={600}>Nueva Impresión</DialogTitle>
+ <Dialog open={open} keepMounted onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle fontWeight={600}>
+        {mode === "add" ? "Nueva Impresión" : "Editar Impresión"}
+      </DialogTitle>
 
       <DialogContent>
-        <DialogContentText sx={{ mb: 2 }}>
-          Completa la información para registrar una nueva impresión.
+      <DialogContentText sx={{ mb: 2 }}>
+          {mode === "add"
+            ? "Completa la información para registrar una nueva impresión."
+            : "Modifica la información de la impresión seleccionada."}
         </DialogContentText>
 
         <Grid container spacing={2}>
@@ -186,10 +200,10 @@ export const FormAddImpression = ({ open, handleClose }) => {
         </Grid>
       </DialogContent>
 
-      <DialogActions>
+     <DialogActions>
         <Button onClick={handleClose}>Cancelar</Button>
         <Button variant="contained" onClick={handleSave}>
-          Guardar
+          {mode === "add" ? "Guardar" : "Actualizar"}
         </Button>
       </DialogActions>
     </Dialog>
