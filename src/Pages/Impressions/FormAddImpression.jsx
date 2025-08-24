@@ -24,7 +24,6 @@ const PRICES = {
 export const FormAddImpression = ({ open, handleClose }) => {
   const [formData, setFormData] = useState({
     userType: "",
-    userName: "",
     pages: 1,
     printType: "blanco_negro",
     finalPrice: (1 * PRICES["blanco_negro"]).toFixed(2),
