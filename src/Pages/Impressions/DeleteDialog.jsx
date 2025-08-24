@@ -5,7 +5,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
-export default function DeleteDialog({ open, handleClose, handleConfirm }) {
+export default function DeleteDialog({ open, handleClose,row}) {
   return (
     <Dialog
       open={open}
@@ -30,7 +30,7 @@ export default function DeleteDialog({ open, handleClose, handleConfirm }) {
           Cancelar
         </Button>
         <Button
-          onClick={handleConfirm}
+          onClick={handleClose}
           variant="contained"
           color="error"
           autoFocus

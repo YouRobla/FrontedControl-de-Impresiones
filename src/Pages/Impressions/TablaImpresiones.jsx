@@ -20,7 +20,12 @@ function createData(indice, usuario, tipo, paginas, costo, fecha) {
 const rows = [
   createData(1, "Maestro", "B/N", 10, 1.0, "2025-09-01"),
   createData(2, "Alumno", "Color", 5, 2.5, "2025-09-05"),
-  createData(3, "Admin", "B/N", 20, 3.0, "2025-09-10"),
+  createData(3, "Maestro", "B/N", 10, 1.0, "2025-09-01"),
+  createData(4, "Alumno", "Color", 5, 2.5, "2025-09-05"),
+  createData(5, "Maestro", "B/N", 10, 1.0, "2025-09-01"),
+  createData(6, "Alumno", "Color", 5, 2.5, "2025-09-05"),
+  createData(7, "Maestro", "B/N", 10, 1.0, "2025-09-01"),
+  createData(8, "Alumno", "Color", 5, 2.5, "2025-09-05"),
 ];
 
 export default function TablaImpresiones() {
@@ -30,14 +35,14 @@ export default function TablaImpresiones() {
   // 👉 aquí guardamos la fila seleccionada
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
+const handleClickOpen = (row) => {
+  setSelectedRow(row);
+  setOpen(true);
+};
+const handleClose = () => {
+  setOpen(false);
+  setSelectedRow(null); // limpiar también aquí
+};
 const openEditForm = (row) => {
   setSelectedRow({
     userType: row.usuario.toLowerCase(), // "Maestro" -> "maestro"
@@ -83,10 +88,9 @@ const openEditForm = (row) => {
                 <IconButton color="primary" onClick={() => openEditForm(row)}>
                   <EditIcon />
                 </IconButton>
-
-                <IconButton color="error" onClick={handleClickOpen}>
-                  <DeleteForeverIcon />
-                </IconButton>
+              <IconButton color="error" onClick={() => handleClickOpen(row)}>
+                <DeleteForeverIcon />
+              </IconButton>
               </TableCell>
             </TableRow>
           ))}
@@ -94,7 +98,7 @@ const openEditForm = (row) => {
       </Table>
 
       {/* Modal eliminar */}
-      <DeleteDialog open={open} handleClose={handleClose} />
+      <DeleteDialog open={open} handleClose={handleClose} row={selectedRow} />
 
       {/* Modal editar */}
       <FormAddImpression
