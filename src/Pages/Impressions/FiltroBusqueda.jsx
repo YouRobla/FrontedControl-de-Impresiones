@@ -8,7 +8,7 @@ import {
   MenuItem,
   Paper
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+
 
 export default function FiltroBusqueda() {
   return (

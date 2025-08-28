@@ -1,6 +1,6 @@
 import { Box, Typography, Button, Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CardDetail from "../../Components/CardDetail";
+
 import { useState } from "react";
 import { FormAddImpression } from "./FormAddImpression";
 
@@ -37,7 +37,7 @@ export default function ImpresionesHeader() {
     </Button>
   </Grid>
 
-  <FormAddImpression open={open} handleClose={handleClose} />
+  <FormAddImpression open={open} handleClose={handleClose}  />
 </Grid>
   );
 }
