@@ -12,56 +12,42 @@ export const NoteProvider = ({ children }) => {
     setLoading(true);
     const { data, error } = await supabase.from("impresiones").select();
     if (error) console.error("Error al obtener datos:", error);
-    else setNotas(data?.filter(item => item != null) || []);
+    else setNotas(data?.filter((item) => item != null) || []);
     setLoading(false);
   };
 
   // Agregar una nueva impresión
   const addImpresion = async (newRecord) => {
-    const { data, error } = await supabase.from("impresiones").insert([newRecord]).select();
-    if (error) return console.error("Error al agregar:", error);
-    if (data && data[0]) setNotas(prev => [...prev, data[0]]);
-  };
-
-// Editar una impresión existente
-const editImpresion = async (id, updatedRecord) => {
-  try {
     const { data, error } = await supabase
       .from("impresiones")
-      .update(updatedRecord)
-      .eq("id", id)
+      .insert([newRecord])
       .select();
+    if (error) return console.error("Error al agregar:", error);
+    if (data && data[0]) setNotas((prev) => [...prev, data[0]]);
+  };
 
-    if (error) {
-      console.error("Error al editar:", error);
-      return;
+  const editImpresion = async (id, updatedRecord) => {
+    try {
+      const { data, error } = await supabase
+        .from("impresiones")
+        .update(updatedRecord)
+        .eq("id",id) // 👈 asegúrate que sea número
+        .select();
+
+      if (error) return console.error("❌ Error al editar:", error);
+
+      // Actualizar estado local
+      setNotas((prev) => prev.map((nota) => (nota.id === id ? data[0] : nota)));
+    } catch (err) {
+      console.error("🚨 Error inesperado:", err);
     }
-
-    if (data && data[0]) {
-      // Actualiza el estado local con el registro editado
-      setNotas(prev =>
-        prev.map(row => (row?.id === id ? data[0] : row))
-      );
-
-      // Feedback de éxito
-      console.log("Registro actualizado:", data[0]);
-
-      // Opcional: alerta o notificación visual
-      alert(`¡Registro actualizado!\nUsuario: ${data[0].usuario}\nCosto: S/${data[0].costo}`);
-    } else {
-      console.warn("No se encontró el registro para actualizar.");
-    }
-  } catch (err) {
-    console.error("Error inesperado al editar:", err);
-  }
-};
-
+  };
 
   // Eliminar una impresión
   const deleteImpresion = async (id) => {
     const { error } = await supabase.from("impresiones").delete().eq("id", id);
     if (error) return console.error("Error al eliminar:", error);
-    setNotas(prev => prev.filter(row => row?.id !== id));
+    setNotas((prev) => prev.filter((row) => row?.id !== id));
   };
 
   useEffect(() => {
@@ -76,7 +62,7 @@ const editImpresion = async (id, updatedRecord) => {
         fetchNotas,
         addImpresion,
         editImpresion,
-        deleteImpresion
+        deleteImpresion,
       }}
     >
       {children}

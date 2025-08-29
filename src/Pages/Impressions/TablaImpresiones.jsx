@@ -9,7 +9,7 @@ import Paper from "@mui/material/Paper";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Typography, Box } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DeleteDialog from "./DeleteDialog";
 import { FormAddImpression } from "./FormAddImpression";
 
@@ -20,29 +20,28 @@ import { NoteContext } from "../../Context/NoteContext";
 export default function TablaImpresiones() {
 
   const { notas } = useContext(NoteContext);
-  const [open, setOpen] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const handleClickOpen = (row) => {
-    
+  const handleClickOpenDelte = (row) => {
     setSelectedRow(row);
-    setOpen(true);
+    setOpenDelete(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleCloseDelete = () => {
+    setOpenDelete(false);
     setSelectedRow(null);
   };
 
 
-  const openEditForm = (row) => {
+  const  handleOpenEdit = (row) => {
     setSelectedRow(row);  
     setOpenEdit(true);
   };
 
 
-  const closeEditForm = () => {
+  const handleCloseEdit = () => {
     setOpenEdit(false);
     setSelectedRow(null);
   };
@@ -83,11 +82,11 @@ export default function TablaImpresiones() {
                 <TableCell align="center">{row.costo}</TableCell>
                 <TableCell align="center">{row.fecha}</TableCell>
                 <TableCell align="center">
-                  <IconButton color="primary" onClick={() => openEditForm(row)}>
+                  <IconButton color="primary" onClick={() => handleOpenEdit(row)}>
                     <EditIcon />
                   </IconButton>
 
-                  <IconButton color="error" onClick={() => handleClickOpen(row)}>
+                  <IconButton color="error" onClick={() => handleClickOpenDelte(row)}>
                     <DeleteForeverIcon />
                   </IconButton>
                 </TableCell>
@@ -98,11 +97,11 @@ export default function TablaImpresiones() {
       )}
 
       {/* Modal eliminar */}
-      <DeleteDialog open={open} handleClose={handleClose} row={selectedRow} />
+      <DeleteDialog open={openDelete} handleClose={handleCloseDelete} id={selectedRow?.id} />
 
       <FormAddImpression
         open={openEdit}
-        handleClose={closeEditForm}
+        handleClose={handleCloseEdit}
         mode="edit"
         initialData={selectedRow}
        

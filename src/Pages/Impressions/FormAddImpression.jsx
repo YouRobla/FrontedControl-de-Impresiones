@@ -18,8 +18,8 @@ import { useState, useEffect, useContext } from "react";
 import { NoteContext } from "../../Context/NoteContext";
 
 const PRICES = {
-  blanco_negro: 0.1,
-  color: 0.2,
+  "B/N": 0.1,
+  Color: 0.2,
 };
 
 export const FormAddImpression = ({
@@ -30,23 +30,19 @@ export const FormAddImpression = ({
 }) => {
   const { addImpresion, editImpresion } = useContext(NoteContext);
 
- const DEFAULT_DATA = {
-  id: 0,
-  usuario: "alumno",
-  tipo: "blanco_negro",   // ⚡ debería coincidir con PRICES
-  paginas: 1,
-  costo: (1 * PRICES["blanco_negro"]).toFixed(2),
- 
-};
+  const DEFAULT_DATA = {
+    usuario: "alumno",
+    tipo: "B/N", // ⚡ debería coincidir con PRICES
+    paginas: 1,
+    costo: (1 * PRICES["B/N"]).toFixed(2),
+  };
 
   const [formData, setFormData] = useState(DEFAULT_DATA);
-
 
   useEffect(() => {
     if (open) {
       if (initialData) {
         setFormData({ ...DEFAULT_DATA, ...initialData });
-        console.log('Si existen datos mapeados'+initialData.usuario);
       } else {
         setFormData(DEFAULT_DATA);
       }
@@ -64,34 +60,28 @@ export const FormAddImpression = ({
     }
   }, [formData.paginas, formData.tipo]);
 
-// Estado de validación
-const isInvalid =
-  formData.costo === "" ||
-  isNaN(Number(formData.costo)) ||
-  Number(formData.costo) < 0.10;
+  // Estado de validación
+  const isInvalid =
+    formData.costo === "" ||
+    isNaN(Number(formData.costo)) ||
+    Number(formData.costo) < 0.1;
 
-
-  
-const handleSave = () => {
-  if (isInvalid) {
-    setShowError(true); // 🚨 Mostrar error
-    return; // 🚫 No guardar si el valor es inválido
-  }
-
-  setShowError(false); // ✅ Ocultar error si todo está bien
-  console.log({ formData });
-
-  if (mode === "add") {
-    addImpresion(formData);
-  } else {
-    editImpresion(formData);
-  }
-  handleClose();
-};
-
-
+  const handleSave = async () => {
+    if (mode === "add") {
+      addImpresion(formData);
+    } else {
+      editImpresion(formData.id, formData);
+    }
+    handleClose();
+  };
   return (
-    <Dialog open={open} keepMounted onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      keepMounted
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle fontWeight={600}>
         {mode === "add" ? "Nueva Impresión" : "Editar Impresión"}
       </DialogTitle>
@@ -106,7 +96,7 @@ const handleSave = () => {
         <Grid container spacing={2}>
           {/* Tipo de usuario */}
           <Grid size={12}>
-            <FormControl fullWidth >
+            <FormControl fullWidth>
               <InputLabel id="tipeUsers">Tipo de Usuario</InputLabel>
               <Select
                 labelId="tipeUsers"
@@ -123,85 +113,79 @@ const handleSave = () => {
                 <MenuItem value="alumno">Alumno</MenuItem>
                 <MenuItem value="maestro">Maestro</MenuItem>
               </Select>
-              
             </FormControl>
           </Grid>
 
           {/* Número de páginas */}
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
-                fullWidth
-                label="Número de Páginas"
-                type="number"
-                value={formData.paginas || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    paginas: parseInt(e.target.value) || 1,
-                  })
-                }
-              />
+              fullWidth
+              label="Número de Páginas"
+              type="number"
+              value={formData.paginas || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  paginas: parseInt(e.target.value) || 1,
+                })
+              }
+            />
           </Grid>
 
           {/* Tipo de impresión */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth >
+            <FormControl fullWidth>
               <InputLabel id="typeImpresion">Tipo de Impresión</InputLabel>
               <Select
-              label="Tipo de Impresión"
-              labelId="typeImpresion"
-              value={formData.tipo || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  tipo: e.target.value,   // usar la misma clave que en value
-                })
-              }
-            >
-              <MenuItem value="blanco_negro">Blanco y Negro (S/0.10)</MenuItem>
-              <MenuItem value="color">Color (S/0.20)</MenuItem>
-            </Select>
+                label="Tipo de Impresión"
+                labelId="typeImpresion"
+                value={formData.tipo || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    tipo: e.target.value, // usar la misma clave que en value
+                  })
+                }
+              >
+                <MenuItem value="B/N">Blanco y Negro (S/0.10)</MenuItem>
+                <MenuItem value="Color">Color (S/0.20)</MenuItem>
+              </Select>
             </FormControl>
           </Grid>
 
-  
-
-         {/* Precio final editable */}
-  <Grid size={12}>
- <TextField
-  fullWidth
-  label="Precio Final (S/)"
-  type="text"
-  value={formData.costo ?? ""}
-  error={
-    formData.costo === "" ||
-    Number(formData.costo) < 0.10
-  }
-  helperText={
-    formData.costo === ""
-      ? " El campo es obligatorio"
-      : isNaN(Number(formData.costo)) || Number(formData.costo) < 0.10
-      ? " El valor mínimo aceptado es 0.10"
-      : "Puedes ajustar el precio si hubo un costo adicional."
-  }
-  onChange={(e) => {
-    let value = e.target.value;
-    // solo números y hasta 2 decimales
-    if (/^\d*\.?\d{0,2}$/.test(value)) {
-      setFormData({ ...formData, costo: value });
-    }
-  }}
-  onBlur={() => {
-    if (formData.costo !== "" && !isNaN(Number(formData.costo))) {
-      setFormData({
-        ...formData,
-        costo: Number(formData.costo).toFixed(2),
-      });
-    }
-  }}
-/>
-</Grid>
-
+          {/* Precio final editable */}
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              label="Precio Final (S/)"
+              type="text"
+              value={formData.costo ?? ""}
+              error={isInvalid}
+              helperText={
+                formData.costo === ""
+                  ? "El campo es obligatorio"
+                  : isNaN(Number(formData.costo)) ||
+                    Number(formData.costo) < 0.1
+                  ? "El valor mínimo aceptado es 0.10"
+                  : "Puedes ajustar el precio si hubo un costo adicional."
+              }
+              onChange={(e) => {
+                let value = e.target.value;
+                // solo números y hasta 2 decimales
+                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                  setFormData({ ...formData, costo: value });
+                }
+              }}
+              onBlur={() => {
+                if (formData.costo !== "" && !isNaN(Number(formData.costo))) {
+                  setFormData({
+                    ...formData,
+                    costo: Number(formData.costo).toFixed(2),
+                  });
+                }
+              }}
+            />
+          </Grid>
 
           {/* Alerta con total */}
           <Grid size={12}>
@@ -217,7 +201,7 @@ const handleSave = () => {
 
       <DialogActions>
         <Button onClick={handleClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSave}>
+        <Button variant="contained" onClick={handleSave} disabled={isInvalid}>
           {mode === "add" ? "Guardar" : "Actualizar"}
         </Button>
       </DialogActions>
