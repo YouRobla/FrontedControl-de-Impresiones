@@ -5,11 +5,14 @@ import {
   Typography,
   Box,
   Button,
+  Drawer,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { NavLink } from "react-router";
-
+import DrawerList from "./DrawerList";
 export default function Navbar({ navlinks }) {
+
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -24,6 +27,7 @@ export default function Navbar({ navlinks }) {
         >
           <MenuIcon />
         </IconButton>
+        
 
         {/* Título */}
         <Typography variant="h6" sx={{ flexGrow: 1 }}>

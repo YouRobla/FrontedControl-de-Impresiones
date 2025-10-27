@@ -13,7 +13,11 @@ import {
   TextField,
   Alert,
   Typography,
+  IconButton,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
+import { AddCircle, RemoveCircle } from "@mui/icons-material";
 import { useState, useEffect, useContext } from "react";
 import { NoteContext } from "../../Context/NoteContext";
 
@@ -30,58 +34,97 @@ export const FormAddImpression = ({
 }) => {
   const { addImpresion, editImpresion } = useContext(NoteContext);
 
-  const DEFAULT_DATA = {
+
+
+  // Datos base
+  const DEFAULT_DETAIL = { tipo: "B/N", paginas: 1, costo: 0.1 };
+  const DEFAULT_FORM = {
     usuario: "alumno",
-    tipo: "B/N", // ⚡ debería coincidir con PRICES
-    paginas: 1,
-    costo: (1 * PRICES["B/N"]).toFixed(2),
+    fecha: new Date().toISOString().slice(0, 10),
+    detalles: [DEFAULT_DETAIL],
   };
 
-  const [formData, setFormData] = useState(DEFAULT_DATA);
+  const [formData, setFormData] = useState(DEFAULT_FORM);
 
+  // 🔹 Cargar datos iniciales (modo editar)
   useEffect(() => {
     if (open) {
       if (initialData) {
-        setFormData({ ...DEFAULT_DATA, ...initialData });
+        const detallesAdaptados =
+          initialData.detalle_impresion?.map((d) => ({
+            tipo: d.tipo,
+            paginas: d.paginas,
+            costo: Number(d.costo),
+          })) || [DEFAULT_DETAIL];
+
+        setFormData({
+          usuario: initialData.usuario,
+          fecha: initialData.fecha,
+          detalles: detallesAdaptados,
+        });
       } else {
-        setFormData(DEFAULT_DATA);
+        setFormData(DEFAULT_FORM);
       }
     }
   }, [open, initialData]);
 
-  // Calcula automáticamente el precio cuando cambian páginas o tipo
-  useEffect(() => {
-    // Evita el cálculo si `pages` o `printType` no son válidos
-    if (formData.paginas > 0 && formData.tipo) {
-      setFormData((prev) => ({
-        ...prev,
-        costo: (prev.paginas * PRICES[prev.tipo]).toFixed(2),
-      }));
+  // 🔹 Funciones de control dinámico
+  const handleChangeUsuario = (e) =>
+    setFormData({ ...formData, usuario: e.target.value });
+
+  const handleAddDetalle = () => {
+    setFormData((prev) => ({
+      ...prev,
+      detalles: [...prev.detalles, { ...DEFAULT_DETAIL }],
+    }));
+  };
+
+  const handleRemoveDetalle = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      detalles: prev.detalles.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleChangeDetalle = (index, field, value) => {
+    const newDetalles = [...formData.detalles];
+    newDetalles[index][field] =
+      field === "paginas" ? Number(value) || 0 : value;
+
+    // Recalcular costo automático
+    if (field === "tipo" || field === "paginas") {
+      const tipo = newDetalles[index].tipo;
+      const paginas = newDetalles[index].paginas;
+      newDetalles[index].costo = (paginas * PRICES[tipo]).toFixed(2);
     }
-  }, [formData.paginas, formData.tipo]);
 
-  // Estado de validación
-  const isInvalid =
-    formData.costo === "" ||
-    isNaN(Number(formData.costo)) ||
-    Number(formData.costo) < 0.1;
+    setFormData({ ...formData, detalles: newDetalles });
+  };
 
+  // 🔹 Cálculo total
+  const total = formData.detalles.reduce(
+    (acc, d) => acc + Number(d.costo),
+    0
+  );
+
+  // ✅ Optimización visual: cierre instantáneo + guardado en background
   const handleSave = async () => {
-    if (mode === "add") {
-      addImpresion(formData);
-    } else {
-      editImpresion(formData.id, formData);
-    }
-    handleClose();
+    handleClose(); // 🚀 Cierra el modal al instante
+    // Ejecuta la operación sin bloquear la UI
+    setTimeout(async () => {
+      try {
+        if (mode === "add") {
+          await addImpresion(formData);
+        } else {
+          await editImpresion(initialData.id, formData);
+        }
+      } catch (err) {
+        console.error("❌ Error en guardado:", err);
+      } 
+    }, 0);
   };
   return (
-    <Dialog
-      open={open}
-      keepMounted
-      onClose={handleClose}
-      fullWidth
-      maxWidth="sm"
-    >
+    <Dialog open={open} keepMounted onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle fontWeight={600}>
         {mode === "add" ? "Nueva Impresión" : "Editar Impresión"}
       </DialogTitle>
@@ -89,119 +132,113 @@ export const FormAddImpression = ({
       <DialogContent>
         <DialogContentText sx={{ mb: 2 }}>
           {mode === "add"
-            ? "Completa la información para registrar una nueva impresión."
+            ? "Completa los datos para registrar una nueva impresión."
             : "Modifica la información de la impresión seleccionada."}
         </DialogContentText>
 
-        <Grid container spacing={2}>
-          {/* Tipo de usuario */}
-          <Grid size={12}>
-            <FormControl fullWidth>
-              <InputLabel id="tipeUsers">Tipo de Usuario</InputLabel>
-              <Select
-                labelId="tipeUsers"
-                label="Tipo de Usuario"
-                // CAMBIO: El valor debe venir del estado 'formData', no de 'initialData'.
-                value={formData.usuario || ""}
+        {/* Usuario */}
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="user-type-label">Tipo de Usuario</InputLabel>
+          <Select
+            labelId="user-type-label"
+            label="Tipo de Usuario"
+            value={formData.usuario}
+            onChange={handleChangeUsuario}
+          >
+            <MenuItem value="alumno">Alumno</MenuItem>
+            <MenuItem value="maestro">Maestro</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Detalles dinámicos */}
+        {formData.detalles.map((detalle, index) => (
+          
+          <Grid
+            container
+            spacing={2}
+            key={index}
+            alignItems="center"
+            sx={{
+              border: "1px solid #e0e0e0",
+              borderRadius: 2,
+              p: 2,
+              mb: 2,
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <Grid item size={{xs:12,sm:4}}>
+              <FormControl fullWidth>
+                <InputLabel id={`tipo-${index}`}>Tipo de Impresión</InputLabel>
+                <Select
+                  labelId={`tipo-${index}`}
+                  value={detalle.tipo}
+                  label="Tipo de Impresión"
+                  onChange={(e) =>
+                    handleChangeDetalle(index, "tipo", e.target.value)
+                  }
+                >
+                  <MenuItem value="B/N">Blanco y Negro (S/0.10)</MenuItem>
+                  <MenuItem value="Color">Color (S/0.20)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item size={{xs:12,sm:3}}>  
+              <TextField
+                fullWidth
+                label="Páginas"
+                type="number"
+                value={detalle.paginas}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    usuario: e.target.value,
-                  })
+                  handleChangeDetalle(index, "paginas", e.target.value)
                 }
-              >
-                <MenuItem value="alumno">Alumno</MenuItem>
-                <MenuItem value="maestro">Maestro</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+              />
+            </Grid>
 
-          {/* Número de páginas */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Número de Páginas"
-              type="number"
-              value={formData.paginas || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  paginas: parseInt(e.target.value) || 1,
-                })
-              }
-            />
-          </Grid>
-
-          {/* Tipo de impresión */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel id="typeImpresion">Tipo de Impresión</InputLabel>
-              <Select
-                label="Tipo de Impresión"
-                labelId="typeImpresion"
-                value={formData.tipo || ""}
+            <Grid item size={{xs:12,sm:3}}>
+              <TextField
+                fullWidth
+                label="Costo (S/)"
+                value={detalle.costo}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tipo: e.target.value, // usar la misma clave que en value
-                  })
+                  handleChangeDetalle(index, "costo", e.target.value)
                 }
-              >
-                <MenuItem value="B/N">Blanco y Negro (S/0.10)</MenuItem>
-                <MenuItem value="Color">Color (S/0.20)</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+              />
+            </Grid>
 
-          {/* Precio final editable */}
-          <Grid size={12}>
-            <TextField
-              fullWidth
-              label="Precio Final (S/)"
-              type="text"
-              value={formData.costo ?? ""}
-              error={isInvalid}
-              helperText={
-                formData.costo === ""
-                  ? "El campo es obligatorio"
-                  : isNaN(Number(formData.costo)) ||
-                    Number(formData.costo) < 0.1
-                  ? "El valor mínimo aceptado es 0.10"
-                  : "Puedes ajustar el precio si hubo un costo adicional."
-              }
-              onChange={(e) => {
-                let value = e.target.value;
-                // solo números y hasta 2 decimales
-                if (/^\d*\.?\d{0,2}$/.test(value)) {
-                  setFormData({ ...formData, costo: value });
-                }
-              }}
-              onBlur={() => {
-                if (formData.costo !== "" && !isNaN(Number(formData.costo))) {
-                  setFormData({
-                    ...formData,
-                    costo: Number(formData.costo).toFixed(2),
-                  });
-                }
-              }}
-            />
+            <Grid item size={{xs:12,sm:2}} sx={{ textAlign: "center" }}>
+              {formData.detalles.length > 1 && (
+                <IconButton
+                  color="error"
+                  onClick={() => handleRemoveDetalle(index)}
+                >
+                  <RemoveCircle />
+                </IconButton>
+              )}
+            </Grid>
           </Grid>
+        ))}
 
-          {/* Alerta con total */}
-          <Grid size={12}>
-            <Alert severity="info">
-              <Typography variant="body2">
-                {/* CAMBIO: El total también debe reflejar el estado 'formData'. */}
-                Total a cobrar: <strong>S/{formData.costo}</strong>
-              </Typography>
-            </Alert>
-          </Grid>
-        </Grid>
+        <Button
+          startIcon={<AddCircle />}
+          onClick={handleAddDetalle}
+          sx={{ mb: 2 }}
+        >
+          Agregar otro tipo de impresión
+        </Button>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Alert severity="info">
+          <Typography variant="body2">
+            Total a cobrar: <strong>S/{total.toFixed(2)}</strong>
+          </Typography>
+        </Alert>
       </DialogContent>
 
       <DialogActions>
         <Button onClick={handleClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSave} disabled={isInvalid}>
+        <Button variant="contained" onClick={handleSave}>
           {mode === "add" ? "Guardar" : "Actualizar"}
         </Button>
       </DialogActions>
