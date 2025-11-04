@@ -8,6 +8,7 @@ import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import DescriptionIcon from '@mui/icons-material/Description';
 import Navbar from "./Navbar";
 import { NoteProvider } from "../../Context/NoteContext";
+import { GastosProvider } from "../../Context/GastosContext";
 
 const NavLinks =[
     {
@@ -28,10 +29,12 @@ export default function MainLayout() {
   return (
     <>
     <NoteProvider>
-      <Navbar  navlinks={NavLinks}/>
-      <Container sx={{ mt: 2}}  >
-        <Outlet /> 
-      </Container>
+      <GastosProvider>
+        <Navbar  navlinks={NavLinks}/>
+        <Container sx={{ mt: 2}}  >
+          <Outlet /> 
+        </Container>
+      </GastosProvider>
     </NoteProvider>
     </>
   );

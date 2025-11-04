@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { NoteContext } from "../../Context/NoteContext";
+import { GastosContext } from "../../Context/GastosContext";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -16,13 +16,23 @@ import {
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 
-export default function FiltroBusqueda() {
+const CATEGORIAS = [
+  { value: "all", label: "Todas" },
+  { value: "papel", label: "Papel" },
+  { value: "tinta", label: "Tinta" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+  { value: "reparacion", label: "Reparación" },
+  { value: "suministros", label: "Suministros" },
+  { value: "otros", label: "Otros" },
+];
+
+export default function FiltroBusquedaGastos() {
   const {
-    filtroUsuario,
-    setFiltroUsuario,
+    filtroCategoria,
+    setFiltroCategoria,
     filtroFecha,
     setFiltroFecha,
-  } = useContext(NoteContext);
+  } = useContext(GastosContext);
 
   return (
     <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: "#fafafa" }}>
@@ -31,24 +41,26 @@ export default function FiltroBusqueda() {
       </Typography>
 
       <Grid container spacing={2}>
-        {/* Filtro por persona */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/* Filtro por categoría */}
+        <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel>Persona</InputLabel>
+            <InputLabel>Categoría</InputLabel>
             <Select
-              value={filtroUsuario}
-              onChange={(e) => setFiltroUsuario(e.target.value)}
-              label="Persona"
+              value={filtroCategoria}
+              onChange={(e) => setFiltroCategoria(e.target.value)}
+              label="Categoría"
             >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="alumno">Alumnos</MenuItem>
-              <MenuItem value="maestro">Maestros</MenuItem>
+              {CATEGORIAS.map((cat) => (
+                <MenuItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
 
         {/* Filtro por día/mes/año con formato personalizado */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item size={{ xs: 12, md: 6 }}>
           <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
@@ -69,6 +81,7 @@ export default function FiltroBusqueda() {
               <Button
                 size="small"
                 variant="outlined"
+                color="error"
                 startIcon={<ClearIcon />}
                 onClick={() => setFiltroFecha(null)}
                 sx={{
@@ -86,3 +99,4 @@ export default function FiltroBusqueda() {
     </Paper>
   );
 }
+
