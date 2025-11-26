@@ -3,97 +3,9 @@ import { supabase } from "../supabaseClient";
 
 export const GastosContext = createContext();
 
-// 🔹 Datos de prueba locales
-const GASTOS_MOCK = [
-  {
-    id: 1,
-    categoria: "papel",
-    descripcion: "Compra de papel A4 500 hojas",
-    monto: 25.50,
-    fecha: "2024-01-15"
-  },
-  {
-    id: 2,
-    categoria: "tinta",
-    descripcion: "Cartucho de tinta negra HP",
-    monto: 45.00,
-    fecha: "2024-01-20"
-  },
-  {
-    id: 3,
-    categoria: "mantenimiento",
-    descripcion: "Mantenimiento preventivo impresora",
-    monto: 120.00,
-    fecha: "2024-02-05"
-  },
-  {
-    id: 4,
-    categoria: "papel",
-    descripcion: "Papel fotográfico 50 hojas",
-    monto: 35.75,
-    fecha: "2024-02-10"
-  },
-  {
-    id: 5,
-    categoria: "tinta",
-    descripcion: "Set completo de tintas color",
-    monto: 85.50,
-    fecha: "2024-02-15"
-  },
-  {
-    id: 6,
-    categoria: "reparacion",
-    descripcion: "Reparación de bandeja de papel",
-    monto: 150.00,
-    fecha: "2024-03-01"
-  },
-  {
-    id: 7,
-    categoria: "suministros",
-    descripcion: "Cables USB y adaptadores",
-    monto: 30.00,
-    fecha: "2024-03-05"
-  },
-  {
-    id: 8,
-    categoria: "papel",
-    descripcion: "Papel A4 1000 hojas",
-    monto: 48.00,
-    fecha: "2024-03-10"
-  },
-  {
-    id: 9,
-    categoria: "mantenimiento",
-    descripcion: "Limpieza de cabezales",
-    monto: 80.00,
-    fecha: "2024-03-15"
-  },
-  {
-    id: 10,
-    categoria: "otros",
-    descripcion: "Gastos varios de oficina",
-    monto: 25.00,
-    fecha: "2024-03-20"
-  },
-  {
-    id: 11,
-    categoria: "tinta",
-    descripcion: "Cartucho de tinta magenta",
-    monto: 42.00,
-    fecha: "2024-04-01"
-  },
-  {
-    id: 12,
-    categoria: "papel",
-    descripcion: "Papel reciclado 500 hojas",
-    monto: 22.50,
-    fecha: "2024-04-05"
-  }
-];
-
 export const GastosProvider = ({ children }) => {
-  const [gastos, setGastos] = useState(GASTOS_MOCK); // 🔹 Datos de prueba
-  const [loading, setLoading] = useState(false);
+  const [gastos, setGastos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // 🔹 Filtros
@@ -104,55 +16,59 @@ export const GastosProvider = ({ children }) => {
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
 
-  // 🔹 Obtener datos locales con filtros y paginación
+  // 🔹 Obtener datos desde Supabase con filtros y paginación
   const fetchGastos = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Filtrar datos locales
-      let datosFiltrados = [...GASTOS_MOCK];
-
-      // Aplicar filtro de categoría
-      if (filtroCategoria !== "all") {
-        datosFiltrados = datosFiltrados.filter(g => g.categoria === filtroCategoria);
-      }
-
-      // Aplicar filtro de fecha
+      let queryBase = supabase.from("gastos").select("id", { count: "exact" });
+      // Aplicar filtros también al conteo total
+      if (filtroCategoria !== "all") queryBase = queryBase.eq("categoria", filtroCategoria);
       if (filtroFecha) {
         const year = filtroFecha.year();
         const month = filtroFecha.month() + 1;
         const day = filtroFecha.date();
-        
         if (day && day > 0) {
-          // Filtro por día específico
-          const fechaStr = filtroFecha.format("YYYY-MM-DD");
-          datosFiltrados = datosFiltrados.filter(g => g.fecha === fechaStr);
+          queryBase = queryBase.eq("fecha", filtroFecha.format("YYYY-MM-DD"));
         } else {
-          // Filtro por mes completo
-          datosFiltrados = datosFiltrados.filter(g => {
-            const fechaGasto = new Date(g.fecha);
-            return fechaGasto.getFullYear() === year && fechaGasto.getMonth() + 1 === month;
-          });
+          const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
+          const lastDay = filtroFecha.endOf("month").format("YYYY-MM-DD");
+          queryBase = queryBase.gte("fecha", firstDay).lte("fecha", lastDay);
         }
       }
 
-      // Calcular total de páginas
-      const total = datosFiltrados.length;
-      setTotalPaginas(Math.ceil(total / filtroCantidad));
+      const { count } = await queryBase;
+      setTotalPaginas(count ? Math.ceil(count / filtroCantidad) : 1);
 
-      // Ordenar por fecha descendente
-      datosFiltrados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-      // Aplicar paginación
+      // Calcular rango (paginación supabase usa .range)
       const desde = (paginaActual - 1) * filtroCantidad;
-      const hasta = desde + filtroCantidad;
-      const datosPaginados = datosFiltrados.slice(desde, hasta);
+      const hasta = desde + filtroCantidad - 1;
 
-      setGastos(datosPaginados);
+      let query = supabase
+        .from("gastos")
+        .select("*")
+        .order("fecha", { ascending: false })
+        .range(desde, hasta);
+
+      if (filtroCategoria !== "all") query = query.eq("categoria", filtroCategoria);
+
+      if (filtroFecha) {
+        const year = filtroFecha.year();
+        const month = filtroFecha.month() + 1;
+        const day = filtroFecha.date();
+        if (day && day > 0) {
+          query = query.eq("fecha", filtroFecha.format("YYYY-MM-DD"));
+        } else {
+          const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
+          const lastDay = filtroFecha.endOf("month").format("YYYY-MM-DD");
+          query = query.gte("fecha", firstDay).lte("fecha", lastDay);
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setGastos(data || []);
     } catch (err) {
       console.error("❌ Error al obtener datos:", err);
       setError("Error al obtener los datos. Intenta nuevamente.");
@@ -161,21 +77,21 @@ export const GastosProvider = ({ children }) => {
     }
   };
 
-  // 🧩 CRUD (operaciones locales)
+  // 🧩 CRUD
   const addGasto = async (newRecord) => {
     try {
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      const nuevoGasto = {
-        id: Math.max(...GASTOS_MOCK.map(g => g.id), 0) + 1,
-        categoria: newRecord.categoria,
-        descripcion: newRecord.descripcion,
-        monto: newRecord.monto,
-        fecha: newRecord.fecha || new Date().toISOString().slice(0, 10),
-      };
-      
-      GASTOS_MOCK.unshift(nuevoGasto); // Agregar al inicio
+      const { error } = await supabase
+        .from("gastos")
+        .insert([
+          {
+            categoria: newRecord.categoria,
+            descripcion: newRecord.descripcion,
+            monto: newRecord.monto,
+            fecha: newRecord.fecha || new Date().toISOString().slice(0, 10),
+          },
+        ]);
+
+      if (error) throw error;
       await fetchGastos();
     } catch (err) {
       console.error("🚨 Error al agregar gasto:", err);
@@ -185,20 +101,17 @@ export const GastosProvider = ({ children }) => {
 
   const editGasto = async (id, updatedRecord) => {
     try {
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      const index = GASTOS_MOCK.findIndex(g => g.id === id);
-      if (index !== -1) {
-        GASTOS_MOCK[index] = {
-          ...GASTOS_MOCK[index],
+      const { error } = await supabase
+        .from("gastos")
+        .update({
           categoria: updatedRecord.categoria,
           descripcion: updatedRecord.descripcion,
           monto: updatedRecord.monto,
           fecha: updatedRecord.fecha,
-        };
-      }
-      
+        })
+        .eq("id", id);
+
+      if (error) throw error;
       await fetchGastos();
     } catch (err) {
       console.error("❌ Error al editar gasto:", err);
@@ -208,14 +121,8 @@ export const GastosProvider = ({ children }) => {
 
   const deleteGasto = async (id) => {
     try {
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      const index = GASTOS_MOCK.findIndex(g => g.id === id);
-      if (index !== -1) {
-        GASTOS_MOCK.splice(index, 1);
-      }
-      
+      const { error } = await supabase.from("gastos").delete().eq("id", id);
+      if (error) throw error;
       await fetchGastos();
     } catch (err) {
       console.error("❌ Error al eliminar gasto:", err);

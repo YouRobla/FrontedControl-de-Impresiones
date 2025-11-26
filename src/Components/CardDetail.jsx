@@ -6,7 +6,8 @@ export default function CardDetail({
   unit, 
   note, 
   icon, 
-  priceColor = "grey.600" // color opcional
+  priceColor = "grey.600", // color opcional
+  showCurrency = true // mostrar símbolo de moneda (S/)
 }) {
   return (
     <Card elevation={2}>
@@ -22,7 +23,7 @@ export default function CardDetail({
               color={priceColor} // aquí aplicamos el color recibido
               sx={{ fontWeight: "bold" }}
             >
-              S/{price}{" "}
+              {showCurrency ? `S/${price}` : price}{" "}
               <Typography component="span" variant="body2">
                 {unit} {note && `(${note})`}
               </Typography>

@@ -4,6 +4,8 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import MainLayout from "./Components/navbar/MainLayout";
 import ImpresionesPage from "./Pages/Impressions/ImpresionesPage";
 import GastosPage from "./Pages/Gastos/GastosPage";
+import InformesPage from "./Pages/Informes/InformesPage";
+import DashboardPage from "./Pages/Dashboard/DashboardPage";
 
 
 
@@ -14,7 +16,7 @@ const router = createBrowserRouter([
       children: [
        {
     path: "/",
-    element: <div>Dashbord</div>,
+    element: <DashboardPage />,
   },
    {
     path: "/impressions",
@@ -26,7 +28,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/information",
-    element: <div>informacion</div>,
+    element: <InformesPage />,
   },
       ] 
     }
