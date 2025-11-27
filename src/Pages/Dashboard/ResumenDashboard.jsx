@@ -19,7 +19,7 @@ export default function ResumenDashboard() {
   }
 
   return (
-    <Grid container spacing={3} sx={{ mb: 3 }}>
+    <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <Card elevation={2}>
           <CardContent>

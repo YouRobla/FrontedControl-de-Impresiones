@@ -10,12 +10,12 @@ import GraficoCategoriaGastos from "./GraficoCategoriaGastos";
 export default function DashboardPage() {
   return (
     <DashboardDataProvider>
-      <Box sx={{ pb: 3 }}>
+      <Box sx={{ pb: { xs: 2, sm: 3 }, px: { xs: 0, sm: 0 } }}>
         <DashboardHeader />
         <ResumenDashboard />
 
         {/* Gráficos principales */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
           <Grid size={{ xs: 12, md: 6 }}>
             <GraficoImpresiones />
           </Grid>
@@ -25,7 +25,7 @@ export default function DashboardPage() {
         </Grid>
 
         {/* Gráficos secundarios */}
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid size={{ xs: 12, md: 6 }}>
             <GraficoTipoImpresion />
           </Grid>

@@ -1,29 +1,16 @@
-import { useState, useEffect, useRef } from "react";
 import { Paper, Typography, Box, CircularProgress } from "@mui/material";
 import { BarChart } from "@mui/x-charts";
 import { useDashboard } from "./DashboardDataProvider";
+import { useChartDimensions } from "../../hooks/useChartDimensions";
 
 export default function GraficoIngresosGastos() {
-  const containerRef = useRef(null);
-  const [width, setWidth] = useState(500);
   const { data, loading } = useDashboard();
-
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setWidth(containerRef.current.offsetWidth);
-      }
-    };
-
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+  const { width, height, containerRef, isMobile } = useChartDimensions();
 
   if (loading) {
     return (
-      <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 280 }}>
+      <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: height }}>
           <CircularProgress />
         </Box>
       </Paper>
@@ -31,15 +18,36 @@ export default function GraficoIngresosGastos() {
   }
 
   return (
-    <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: "primary.main" }}>
+    <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, height: "100%" }}>
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          mb: 2, 
+          fontWeight: 600, 
+          color: "primary.main",
+          fontSize: { xs: "1rem", sm: "1.25rem" }
+        }}
+      >
         Ingresos vs Gastos
       </Typography>
-      <Box ref={containerRef} sx={{ width: "100%", minHeight: 280 }}>
+      <Box 
+        ref={containerRef} 
+        sx={{ 
+          width: "100%", 
+          minHeight: height,
+          overflowX: "auto",
+          overflowY: "hidden"
+        }}
+      >
         <BarChart
           width={width}
-          height={280}
-          margin={{ top: 10, bottom: 60, left: 50, right: 10 }}
+          height={height}
+          margin={{
+            top: 10,
+            bottom: isMobile ? 80 : 60,
+            left: isMobile ? 45 : 50,
+            right: 10,
+          }}
           series={[
             {
               data: data.ingresosMensuales || [],
